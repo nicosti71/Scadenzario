@@ -210,11 +210,19 @@ function invia() {
         dest7: document.getElementById("dest7").value
     };
 
-    fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dati)
-    })
+   fetch(API_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dati)
+})
+.then(() => {
+    alert("Risposta server: OK");
+})
+.catch(err => {
+    alert("Errore invio: " + err);
+});
+
     .then(r => r.text())
     .then(t => {
         alert("Risposta server: " + t);
