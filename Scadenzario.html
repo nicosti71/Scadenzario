@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Nuova Scadenza</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #eef1f5;
+        margin: 0;
+        padding: 40px;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #222;
+        font-size: 28px;
+    }
+
+    .container {
+        display: flex;
+        gap: 40px;
+        max-width: 1200px;
+        margin: auto;
+    }
+
+    .box {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        flex: 1;
+    }
+
+    label {
+        display: block;
+        margin-top: 15px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    input, textarea, select {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 6px;
+        border: 1px solid #bbb;
+        font-size: 15px;
+        background: #fafafa;
+    }
+
+    textarea {
+        height: 120px;
+        resize: vertical;
+    }
+
+    .btn {
+        display: block;
+        width: 220px;
+        margin: 35px auto 0 auto;
+        padding: 14px;
+        background: #0078d4;
+        color: white;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn:hover {
+        background: #005fa3;
+    }
+
+    .loading {
+        text-align: center;
+        color: #666;
+        margin-top: 15px;
+        font-size: 14px;
+    }
+
+    .error {
+        color: red;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 10px;
+    }
+</style>
+</head>
+
+<body>
+
+<h2>Nuova Scadenza / Evento</h2>
+
+<div class="container">
+
+    <!-- COLONNA SINISTRA -->
+    <div class="box">
+        <label>Data scadenza</label>
+        <input type="date" id="dataScadenza" required>
+
+        <label>Evento (max 40 caratteri)</label>
+        <input type="text" id="evento" maxlength="40" required>
+
+        <label>Note (descrizione estesa)</label>
+        <textarea id="note"></textarea>
+    </div>
+
+    <!-- COLONNA DESTRA -->
+    <div class="box">
+        <label>Destinatario 1</label>
+        <select id="dest1"></select>
+
+        <label>Destinatario 2</label>
+        <select id="dest2"></select>
+
+        <label>Destinatario 3</label>
+        <select id="dest3"></select>
+
+        <label>Destinatario 4</label>
+        <select id="dest4"></select>
+
+        <label>Destinatario 5</label>
+        <select id="dest5"></select>
+
+        <label>Destinatario 6</label>
+        <select id="dest6"></select>
+
+        <label>Destinatario 7</label>
+        <select id="dest7"></select>
+
+        <div class="loading" id="loading">Caricamento rubrica...</div>
+        <div class="error" id="error"></div>
+    </div>
+
+</div>
+
+<button class="btn" onclick="invia()">Invia</button>
+
+<script>
+// 🔗 URL DELLA TUA API GOOGLE APPS SCRIPT
+const API_URL = "https://script.google.com/macros/s/AKfycbwXaGnDaFharBVfcSP9kpZN4FfJ0CWwgoOTVPK_G_hhQC9HAkoW_fTGzHQZMjund6B5/exec";
+
+// Carica rubrica all'avvio
+window.onload = function() {
+    fetch(API_URL)
+        .then(r => {
+            if (!r.ok) throw new Error("Errore HTTP " + r.status);
+            return r.json();
+        })
+        .then(data => {
+            if (!data.rubrica || data.rubrica.length === 0) {
+                document.getElementById("error").innerText = "Rubrica vuota o non trovata";
+                document.getElementById("loading").style.display = "none";
+                return;
+            }
+
+            // Ordina alfabeticamente per Cognome, poi Nome
+            let rubrica = data.rubrica;
+            rubrica.sort((a, b) => {
+                const cognA = (a.Cognome || "").toLowerCase();
+                const cognB = (b.Cognome || "").toLowerCase();
+
+                if (cognA < cognB) return -1;
+                if (cognA > cognB) return 1;
+
+                const nomeA = (a.Nome || "").toLowerCase();
+                const nomeB = (b.Nome || "").toLowerCase();
+
+                if (nomeA < nomeB) return -1;
+                if (nomeA > nomeB) return 1;
+
+                return 0;
+            });
+
+            const selects = ["dest1","dest2","dest3","dest4","dest5","dest6","dest7"];
+
+            selects.forEach(id => {
+                const sel = document.getElementById(id);
+                sel.innerHTML = "<option value=''>-- nessuno --</option>";
+
+                rubrica.forEach(r => {
+                    const nomeCompleto = `${r.Cognome} ${r.Nome}`.trim();
+                    sel.innerHTML += `<option value="${r.Mail}">${nomeCompleto} (${r.Mail})</option>`;
+                });
+            });
+
+            document.getElementById("loading").style.display = "none";
+        })
+        .catch(err => {
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("error").innerText = "Errore nel caricamento rubrica (API non raggiungibile)";
+            console.error("Errore API:", err);
+        });
+};
+
+function invia() {
+    const payload = {
+        dataScadenza: document.getElementById("dataScadenza").value,
+        evento: document.getElementById("evento").value,
+        note: document.getElementById("note").value,
+        dest1: document.getElementById("dest1").value,
+        dest2: document.getElementById("dest2").value,
+        dest3: document.getElementById("dest3").value,
+        dest4: document.getElementById("dest4").value,
+        dest5: document.getElementById("dest5").value,
+        dest6: document.getElementById("dest6").value,
+        dest7: document.getElementById("dest7").value
+    };
+
+    if (!payload.dataScadenza) {
+        alert("Inserisci la data di scadenza.");
+        return;
+    }
+    if (!payload.evento.trim()) {
+        alert("Inserisci il nome dell'evento.");
+        return;
+    }
+
+    fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.text())
+    .then(res => {
+        if (res === "OK") {
+            alert("Scadenza inserita correttamente!");
+        } else {
+            alert("Errore: " + res);
+        }
+    })
+    .catch(e => {
+        alert("Errore: " + e);
+    });
+}
+</script>
+
+</body>
+</html>
