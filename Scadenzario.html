@@ -197,8 +197,8 @@ window.onload = function() {
 };
 
 function invia() {
-    const payload = {
-        dataScadenza: document.getElementById("dataScadenza").value,
+    const dati = {
+        dataScadenza: document.getElementById("data").value,
         evento: document.getElementById("evento").value,
         note: document.getElementById("note").value,
         dest1: document.getElementById("dest1").value,
@@ -210,32 +210,20 @@ function invia() {
         dest7: document.getElementById("dest7").value
     };
 
-    if (!payload.dataScadenza) {
-        alert("Inserisci la data di scadenza.");
-        return;
-    }
-    if (!payload.evento.trim()) {
-        alert("Inserisci il nome dell'evento.");
-        return;
-    }
-
     fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(dati)
     })
     .then(r => r.text())
-    .then(res => {
-        if (res === "OK") {
-            alert("Scadenza inserita correttamente!");
-        } else {
-            alert("Errore: " + res);
-        }
+    .then(t => {
+        alert("Risposta server: " + t);
     })
-    .catch(e => {
-        alert("Errore: " + e);
+    .catch(err => {
+        alert("Errore invio: " + err);
     });
 }
+
 </script>
 
 </body>
